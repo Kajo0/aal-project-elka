@@ -74,7 +74,7 @@ namespace aal {
 		int n = nk.first;
 		int k = nk.second;
 
-		// T(n) = n + c * (n + n * n?) + c * n * k * Talg(n)
+		// T(n) = c * n + c * (n + n * n?) + c * n * k * Talg(n)
 		double res1 = n * n;
 		double res2 = n * k * n;
 
