@@ -58,9 +58,9 @@ namespace aal {
 
 		// res0 = n; res00 = k;
 		double res1 = n;// * (n + 1) / 2;
-		double res2 = (n - 1) * (2 * k + n) / 2 + (k - 1) * (2 * n + k) / 2;//n * (n - 1) / 2;
-		for (int i = 0; i < n; ++i)
-			res2 *= k;//TODO I have no idea how complex it is :/
+		double res2 = n;//(n - 1) * (2 * k + n) / 2 + (k - 1) * (2 * n + k) / 2;//n * (n - 1) / 2;
+		for (int i = 0; i < k-1; ++i)
+			res2 *= n;//TODO I have no idea how complex it is :/
 
 		return (res1 < res2 ? res2 : res1);
 	}

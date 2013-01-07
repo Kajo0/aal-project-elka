@@ -22,7 +22,7 @@ void properRun(const char* prog) {
 	cout<<"\t"<<prog<<" -d plik\n";
 	cout<<"\t"<<prog<<" -d < plik\n";
 	cout<<"\t"<<prog<<" -g rozmiar_problemu\n";
-	cout<<"\t"<<prog<<" -t rozmiar_problemu_od rozmiar_problemu_do algorytm\n";
+	cout<<"\t"<<prog<<" -t rozmiar_problemu_od rozmiar_problemu_do algorytm [liczba_probek_na_rozmiar_problemu]\n";
 	cout<<"\n";
 	cout<<"\t- algorytm : {1,2,3,4}\n\n";
 	cout<<"\t- Plik formatowany (kolejnosc linii dowolna, nazwy odpowiendnich id inne):\n";
@@ -49,10 +49,10 @@ int main(int argc, char **argv) {
 	aal::Model m;
 	RunAses run_as;
 	Algorithms chosen_algorithm;
-	int problem_size_from, problem_size_to;
+	int problem_size_from, problem_size_to, samples_amount = 1;
 
 	// If no given parameters or too much
-	if (argc < 2 || argc > 5)
+	if (argc < 2 || argc > 6)
 		properRun(argv[0]);
 
 	// To compare option
@@ -79,13 +79,16 @@ int main(int argc, char **argv) {
 
 		run_as = GENERATE;
 	} else if (opt == "-t") {
-		if (argc == 5) {
+		if (argc == 5 || argc == 6) {
 			problem_size_from = atoi(argv[2]);
 			problem_size_to = atoi(argv[3]);
 			chosen_algorithm = Algorithms(atoi(argv[4]));
 
+			if (argc == 6)
+				samples_amount = atoi(argv[5]);
+
 			// If invalid values..
-			if (problem_size_from == 0 || problem_size_to == 0 || problem_size_from > problem_size_to || chosen_algorithm == 0 || chosen_algorithm > 4)
+			if (problem_size_from == 0 || problem_size_to == 0 || problem_size_from > problem_size_to || chosen_algorithm == 0 || chosen_algorithm > 4 || samples_amount < 1)
 				properRun(argv[0]);
 		}
 		else
@@ -117,24 +120,45 @@ int main(int argc, char **argv) {
 
 		// Generate 'table' of results
 		for (int i = problem_size_from; i <= problem_size_to; ++i) {
-			// Generate new data
-			m.generateData(i);
+			std::vector<std::pair<aal::Result, double> > tmp_results;
 
-			// Initialize algorithm
-			alg->init(m.classrooms(), m.orders());
+			for (int j = 0; j < samples_amount; ++j) {
+				// Generate new data
+				m.generateData(i);
 
-			// Start timer
-			aal::Timer::getInstance().start();
+				// Initialize algorithm
+				alg->init(m.classrooms(), m.orders());
 
-			// Run algorithm and get result
-			aal::Result r = alg->run();
+				// Start timer
+				aal::Timer::getInstance().start();
 
-			// Stop timer
-			aal::Timer::getInstance().stop();
-			// Store elapsed time
-			times.push_back(aal::Timer::getInstance().end());
+				// Run algorithm and get result
+				aal::Result r = alg->run();
+
+				// Stop timer
+				aal::Timer::getInstance().stop();
+
+				// Store elapsed time
+				tmp_results.push_back(std::make_pair(r, aal::Timer::getInstance().end()));
+			}
+
+			// Get max time of samples
+			double max_time = tmp_results.begin()->second;
+			int max_time_result_index = 0;
+
+			for (unsigned int j = 0; j < tmp_results.size(); ++j)
+				if (tmp_results[j].second > max_time) {
+					max_time = tmp_results[j].second;
+					max_time_result_index = j;
+				}
+
+
+			// Store worst elapsed time and its result
+			times.push_back(max_time);
 			// Store result
-			results.push_back(r);
+			results.push_back(tmp_results[max_time_result_index].first);
+
+			tmp_results.clear();
 		}
 
 		/*

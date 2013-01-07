@@ -11,7 +11,7 @@ Poprawne wywolanie programu:
 	./aal -d plik
 	./aal -d < plik
 	./aal -g rozmiar_problemu
-	./aal -t rozmiar_problemu_od rozmiar_problemu_do algorytm
+	./aal -t rozmiar_problemu_od rozmiar_problemu_do algorytm [ilosc_probek_na_rozmiar_problemu]
 
 	, gdzie:
 		algorytm : {1,2,3,4}
