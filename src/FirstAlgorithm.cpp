@@ -58,8 +58,8 @@ namespace aal {
 
 		// T(n) = n * log(n) + 2 * k * n + 2 * k * n^2
 		double res1 = n * log(n);		// probably never
-		double res2 = 2 * k * n;		// probably never
-		double res3 = 2 * k * n * n;	// probably always
+		double res2 = k * n;		// probably never
+		double res3 = k * n * n;	// probably always
 
 		return (res1 > res2 ? (res1 > res3 ? res1 : res3) : (res2 > res3 ? res2 : res3));
 	}
