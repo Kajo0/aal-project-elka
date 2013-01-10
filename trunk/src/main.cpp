@@ -22,7 +22,7 @@ void properRun(const char* prog) {
 	cout<<"\t"<<prog<<" -d plik\n";
 	cout<<"\t"<<prog<<" -d < plik\n";
 	cout<<"\t"<<prog<<" -g rozmiar_problemu\n";
-	cout<<"\t"<<prog<<" -t rozmiar_problemu_od rozmiar_problemu_do algorytm [liczba_probek_na_rozmiar_problemu]\n";
+	cout<<"\t"<<prog<<" -t rozmiar_problemu_od ile_wiecej_problemow skok_rozmiaru algorytm [liczba_probek_na_rozmiar_problemu]\n";
 	cout<<"\n";
 	cout<<"\t- algorytm : {1,2,3,4}\n\n";
 	cout<<"\t- Plik formatowany (kolejnosc linii dowolna, nazwy odpowiendnich id inne):\n";
@@ -49,10 +49,10 @@ int main(int argc, char **argv) {
 	aal::Model m;
 	RunAses run_as;
 	Algorithms chosen_algorithm;
-	int problem_size_from, problem_size_to, samples_amount = 1;
+	int problem_size_from, how_much_more_increases_problem_size, problem_size_increase_amount, samples_amount = 1;
 
 	// If no given parameters or too much
-	if (argc < 2 || argc > 6)
+	if (argc < 2 || argc > 7)
 		properRun(argv[0]);
 
 	// To compare option
@@ -79,16 +79,17 @@ int main(int argc, char **argv) {
 
 		run_as = GENERATE;
 	} else if (opt == "-t") {
-		if (argc == 5 || argc == 6) {
+		if (argc == 6 || argc == 7) {
 			problem_size_from = atoi(argv[2]);
-			problem_size_to = atoi(argv[3]);
-			chosen_algorithm = Algorithms(atoi(argv[4]));
+			how_much_more_increases_problem_size = atoi(argv[3]);
+			problem_size_increase_amount = atoi(argv[4]);
+			chosen_algorithm = Algorithms(atoi(argv[5]));
 
-			if (argc == 6)
-				samples_amount = atoi(argv[5]);
+			if (argc == 7)
+				samples_amount = atoi(argv[6]);
 
 			// If invalid values..
-			if (problem_size_from == 0 || problem_size_to == 0 || problem_size_from > problem_size_to || chosen_algorithm == 0 || chosen_algorithm > 4 || samples_amount < 1)
+			if (problem_size_from < 1 || how_much_more_increases_problem_size < 0 || problem_size_increase_amount < 1 || chosen_algorithm < 1 || chosen_algorithm > 4 || samples_amount < 1)
 				properRun(argv[0]);
 		}
 		else
@@ -119,10 +120,14 @@ int main(int argc, char **argv) {
 			alg = new aal::FourthAlgorithm(m.classrooms(), m.orders());
 
 		// Generate 'table' of results
-		for (int i = problem_size_from; i <= problem_size_to; ++i) {
+		for (int i = problem_size_from; i <= problem_size_from + how_much_more_increases_problem_size * problem_size_increase_amount; i += problem_size_increase_amount) {
 			std::vector<std::pair<aal::Result, double> > tmp_results;
 
+
+			std::cout<<"\n("<<((i - problem_size_from) / problem_size_increase_amount + 1)<<"/"<<(how_much_more_increases_problem_size + 1)<<") | "<<samples_amount<<" | "<<flush;
 			for (int j = 0; j < samples_amount; ++j) {
+				std::cout<<"."<<flush;
+
 				// Generate new data
 				m.generateData(i);
 
@@ -164,17 +169,21 @@ int main(int argc, char **argv) {
 		/*
 		 * Generate 'table'
 		 */
+		cout<<"\n";
 		cout.width(10); cout<<"n"<<" ";
 		cout.width(10); cout<<"t(n)[ms]"<<" ";
 		cout.width(10); cout<<"q(n)"<<"\n";
 		// Choose median value
-		int median = (problem_size_from + problem_size_to) / 2;
+		int tmp = problem_size_increase_amount * how_much_more_increases_problem_size;
+		tmp = (how_much_more_increases_problem_size % 2 != 0 ? tmp - problem_size_increase_amount : tmp);
+		int median = (problem_size_from * 2 + tmp) / 2;
 
 		for (unsigned int i = 0; i < results.size(); ++i) {
 			// Calculate q(n)
-			double q = (times[i] * alg->getTn(median) ) / (alg->getTn(i + problem_size_from) * (times[median - problem_size_from] == 0 ? 0.000001 : times[median - problem_size_from]));
+			//			double q = (times[i] * alg->getTn(median) ) / (alg->getTn(i + problem_size_from) * (times[median - problem_size_from] == 0 ? 0.000001 : times[median - problem_size_from]));
+			double q = (times[i] * alg->getTn(median) ) / (alg->getTn(i * problem_size_increase_amount + problem_size_from) * (times[(median - problem_size_from) / problem_size_increase_amount] == 0 ? 0.000001 : times[(median - problem_size_from) / problem_size_increase_amount]));
 
-			cout.width(10); cout<<right<<i + problem_size_from<<" ";
+			cout.width(10); cout<<right<<i * problem_size_increase_amount + problem_size_from<<" ";
 			cout.width(10); cout<<right<<times[i]<<" ";
 			cout.width(10); cout<<right<<q<<"\n";
 		}
